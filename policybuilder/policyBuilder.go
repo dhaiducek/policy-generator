@@ -1,4 +1,4 @@
-package policygen
+package policybuilder
 
 import (
 	"bytes"

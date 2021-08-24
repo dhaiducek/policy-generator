@@ -3,8 +3,8 @@ package policygen
 import (
 	"fmt"
 
-	policygen "github.com/dhaiducek/policy-generator/policygen"
-	utils "github.com/dhaiducek/policy-generator/utils"
+	"github.com/dhaiducek/policy-generator/policybuilder"
+	"github.com/dhaiducek/policy-generator/utils"
 	yaml "gopkg.in/yaml.v3"
 )
 
@@ -27,7 +27,7 @@ func GeneratePolicies(generator *PolicyGenerator) {
 		if err != nil {
 			panic(err)
 		}
-		pBuilder := policygen.NewPolicyBuilder(policyGenTemp, generator.sourcePoliciesPath)
+		pBuilder := policybuilder.NewPolicyBuilder(policyGenTemp, generator.sourcePoliciesPath)
 
 		for k, v := range pBuilder.Build(generator.customResources) {
 			policy, _ := yaml.Marshal(v)
