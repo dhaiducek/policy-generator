@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"strings"
 
-	utils "github.com/dhaiducek/policy-generator/utils"
+	"github.com/dhaiducek/policy-generator/utils"
 	yaml "gopkg.in/yaml.v3"
 )
 

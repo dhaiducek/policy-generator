@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	utils "github.com/dhaiducek/policy-generator/utils"
+	"github.com/dhaiducek/policy-generator/utils"
 )
 
 func CreateAcmPolicy(name string, namespace string, policyObjDefArr []utils.PolicyObjectDefinition) utils.AcmPolicy {

@@ -9,16 +9,26 @@ import (
 )
 
 type PolicyGenerator struct {
-	sourcePoliciesPath string
-	policyGenTempPath  string
-	outPath            string
-	stdout             bool
-	customResources    bool
+	sourcePoliciesPath    string
+	policyGenTemplatePath string
+	outPath               string
+	stdout                bool
+	customResources       bool
 }
 
-func GeneratePolicies(generator *PolicyGenerator) {
+func NewPolicyGenerator(sourcePoliciesPath string, policyGenTemplatePath string, outPath string, stdout bool, customResources bool) *PolicyGenerator {
+	return &PolicyGenerator{
+		sourcePoliciesPath,
+		policyGenTemplatePath,
+		outPath,
+		stdout,
+		customResources,
+	}
+}
 
-	fHandler := utils.NewFilesHandler(generator.sourcePoliciesPath, generator.policyGenTempPath, generator.outPath)
+func (generator *PolicyGenerator) GeneratePolicies() {
+
+	fHandler := utils.NewFilesHandler(generator.sourcePoliciesPath, generator.policyGenTemplatePath, generator.outPath)
 
 	for _, file := range fHandler.GetPolicyGenTemplates() {
 		policyGenTemp := utils.PolicyGenTemplate{}
