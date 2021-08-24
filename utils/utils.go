@@ -13,56 +13,56 @@ const InOper = "In"
 const CustomResource = "customResource"
 
 type PolicyGenConfig struct {
-	SourcePoliciesPath string
-	PolicyGenTempPath string
-	OutPath string
-	Stdout bool
+	sourceResourcePath    string
+	PolicyGenTemplatePath string
+	OutPath               string
+	Stdout                bool
 }
 
 type PolicyGenTemplate struct {
-	ApiVersion string  `yaml:"apiVersion"`
-	Kind string `yaml:"kind"`
-	Metadata metaData `yaml:"metadata"`
+	ApiVersion  string       `yaml:"apiVersion"`
+	Kind        string       `yaml:"kind"`
+	Metadata    metaData     `yaml:"metadata"`
 	SourceFiles []SourceFile `yaml:"sourceFiles"`
 }
 
 type metaData struct {
-	Name string `yaml:"name"`
-	Labels labels `yaml:"labels"`
+	Name      string `yaml:"name"`
+	Labels    labels `yaml:"labels"`
 	Namespace string `yaml:"namespace"`
 }
 
 type labels struct {
-	Common bool  `yaml:"common"`
-	GroupName string  `yaml:"groupName"`
-	SiteName string  `yaml:"siteName"`
-	Mcp string  `yaml:"mcp"`
+	Common    bool   `yaml:"common"`
+	GroupName string `yaml:"groupName"`
+	SiteName  string `yaml:"siteName"`
+	Mcp       string `yaml:"mcp"`
 }
 
 type SourceFile struct {
-	FileName string `yaml:"fileName"`
-	PolicyName string  `yaml:"policyName"`
-	Name string  `yaml:"name"`
-	Labels map[string]string `yaml:"labels"`
-	Spec map[string]interface{} `yaml:"spec"`
-	Data map[string]interface{} `yaml:"data"`
+	FileName   string                 `yaml:"fileName"`
+	PolicyName string                 `yaml:"policyName"`
+	Name       string                 `yaml:"name"`
+	Labels     map[string]string      `yaml:"labels"`
+	Spec       map[string]interface{} `yaml:"spec"`
+	Data       map[string]interface{} `yaml:"data"`
 }
 
 type AcmPolicy struct {
-	ApiVersion string  `yaml:"apiVersion"`
-	Kind string `yaml:"kind"`
-	Metadata struct {
-		Name string `yaml:"name"`
-		Namespace string `yaml:"namespace"`
+	ApiVersion string `yaml:"apiVersion"`
+	Kind       string `yaml:"kind"`
+	Metadata   struct {
+		Name        string            `yaml:"name"`
+		Namespace   string            `yaml:"namespace"`
 		Annotations map[string]string `yaml:"annotations"`
 	}
 	Spec acmPolicySpec `yaml:"spec"`
 }
 
 type acmPolicySpec struct {
-	RemediationAction string `yaml:"remediationAction"`
-	Disabled bool `yaml:"disabled`
-	PolicyTemplates []PolicyObjectDefinition `yaml:"policy-templates"`
+	RemediationAction string                   `yaml:"remediationAction"`
+	Disabled          bool                     `yaml:"disabled"`
+	PolicyTemplates   []PolicyObjectDefinition `yaml:"policy-templates"`
 }
 
 type PolicyObjectDefinition struct {
@@ -70,9 +70,9 @@ type PolicyObjectDefinition struct {
 }
 
 type AcmConfigurationPolicy struct {
-	ApiVersion string  `yaml:"apiVersion"`
-	Kind string `yaml:"kind"`
-	Metadata struct {
+	ApiVersion string `yaml:"apiVersion"`
+	Kind       string `yaml:"kind"`
+	Metadata   struct {
 		Name string `yaml:"name"`
 	}
 	Spec acmConfigPolicySpec `yaml:"spec"`
@@ -80,7 +80,7 @@ type AcmConfigurationPolicy struct {
 
 type acmConfigPolicySpec struct {
 	RemediationAction string `yaml:"remediationAction"`
-	Severity string `yaml:"severity"`
+	Severity          string `yaml:"severity"`
 	NamespaceSelector struct {
 		Exclude []string `yaml:"exclude"`
 		Include []string `yaml:"include"`
@@ -89,32 +89,32 @@ type acmConfigPolicySpec struct {
 }
 
 type ObjectTemplates struct {
-	ComplianceType string `yaml:"complianceType"`
+	ComplianceType   string                 `yaml:"complianceType"`
 	ObjectDefinition map[string]interface{} `yaml:"objectDefinition"`
 }
 
 type PlacementBinding struct {
-	ApiVersion string  `yaml:"apiVersion"`
-	Kind string `yaml:"kind"`
-	Metadata struct {
-		Name string `yaml:"name"`
+	ApiVersion string `yaml:"apiVersion"`
+	Kind       string `yaml:"kind"`
+	Metadata   struct {
+		Name      string `yaml:"name"`
 		Namespace string `yaml:"namespace"`
 	}
-	PlacementRef Subject `yaml:"placementRef"`
-	Subjects []Subject `yaml:"subjects"`
+	PlacementRef Subject   `yaml:"placementRef"`
+	Subjects     []Subject `yaml:"subjects"`
 }
 
 type Subject struct {
-	Name string `yaml:"name"`
-	Kind string `yaml:"kind"`
+	Name     string `yaml:"name"`
+	Kind     string `yaml:"kind"`
 	ApiGroup string `yaml:"apiGroup"`
 }
 
 type PlacementRule struct {
-	ApiVersion string  `yaml:"apiVersion"`
-	Kind string `yaml:"kind"`
-	Metadata struct {
-		Name string `yaml:"name"`
+	ApiVersion string `yaml:"apiVersion"`
+	Kind       string `yaml:"kind"`
+	Metadata   struct {
+		Name      string `yaml:"name"`
 		Namespace string `yaml:"namespace"`
 	}
 	Spec struct {

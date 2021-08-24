@@ -5,20 +5,31 @@ import (
 
 	"github.com/dhaiducek/policy-generator/policybuilder"
 	"github.com/dhaiducek/policy-generator/utils"
-	yaml "gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v3"
 )
 
 type PolicyGenerator struct {
-	sourcePoliciesPath    string
+	sourceResourcePath    string
 	policyGenTemplatePath string
 	outPath               string
 	stdout                bool
 	customResources       bool
 }
 
-func NewPolicyGenerator(sourcePoliciesPath string, policyGenTemplatePath string, outPath string, stdout bool, customResources bool) *PolicyGenerator {
+func NewPolicyGenerator(sourceResourcePath string, policyGenTemplatePath string, outPath string, stdout bool, customResources bool) *PolicyGenerator {
+	// Set default paths
+	if sourceResourcePath == "" {
+		sourceResourcePath = "."
+	}
+	if policyGenTemplatePath == "" {
+		policyGenTemplatePath = "."
+	}
+	if outPath == "" {
+		outPath = "./policies"
+	}
+	// Return generator (booleans default to "false")
 	return &PolicyGenerator{
-		sourcePoliciesPath,
+		sourceResourcePath,
 		policyGenTemplatePath,
 		outPath,
 		stdout,
@@ -28,16 +39,16 @@ func NewPolicyGenerator(sourcePoliciesPath string, policyGenTemplatePath string,
 
 func (generator *PolicyGenerator) GeneratePolicies() {
 
-	fHandler := utils.NewFilesHandler(generator.sourcePoliciesPath, generator.policyGenTemplatePath, generator.outPath)
+	fHandler := utils.NewFilesHandler(generator.sourceResourcePath, generator.policyGenTemplatePath, generator.outPath)
 
 	for _, file := range fHandler.GetPolicyGenTemplates() {
-		policyGenTemp := utils.PolicyGenTemplate{}
-		yamlFile := fHandler.ReadPolicyGenTempFile(file.Name())
-		err := yaml.Unmarshal(yamlFile, &policyGenTemp)
+		policyGenTemplate := utils.PolicyGenTemplate{}
+		yamlFile := fHandler.ReadPolicyGenTemplateFile(file.Name())
+		err := yaml.Unmarshal(yamlFile, &policyGenTemplate)
 		if err != nil {
 			panic(err)
 		}
-		pBuilder := policybuilder.NewPolicyBuilder(policyGenTemp, generator.sourcePoliciesPath)
+		pBuilder := policybuilder.NewPolicyBuilder(policyGenTemplate, generator.sourceResourcePath)
 
 		for k, v := range pBuilder.Build(generator.customResources) {
 			policy, _ := yaml.Marshal(v)
