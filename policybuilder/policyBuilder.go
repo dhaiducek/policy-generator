@@ -11,6 +11,8 @@ import (
 	configpolicyv1 "github.com/open-cluster-management/config-policy-controller/pkg/apis/policy/v1"
 	policyv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/policy/v1"
 	"gopkg.in/yaml.v3"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type PolicyBuilder struct {
@@ -193,7 +195,7 @@ func (pbuilder *PolicyBuilder) splitYamls(yamls []byte) ([][]byte, error) {
 	return resources, nil
 }
 
-func (pbuilder *PolicyBuilder) getPolicy(name string, namespace string, resources []map[string]interface{}) policyv1.Policy {
+func (pbuilder *PolicyBuilder) getPolicy(name string, namespace string, resources []runtime.RawExtension) policyv1.Policy {
 	if err := CheckNameLength(namespace, name); err != nil {
 		panic(err)
 	}
@@ -211,29 +213,29 @@ func (pbuilder *PolicyBuilder) getPolicy(name string, namespace string, resource
 	return acmPolicy
 }
 
-func (pbuilder *PolicyBuilder) getPolicyNsPath() (string, string, string, string, string) {
+func (pbuilder *PolicyBuilder) getPolicyNsPath() (string, string, string, string, metav1.LabelSelectorOperator) {
 	ns := ""
 	path := ""
 	matchKey := ""
-	matchOper := ""
+	var matchOper metav1.LabelSelectorOperator
 	matchValue := ""
 
 	if pbuilder.PolicyGenTemplate.Metadata.Name != "" {
 		if pbuilder.PolicyGenTemplate.Metadata.Labels.SiteName != utils.NotApplicable {
 			ns = utils.SiteNS
 			matchKey = utils.Sites
-			matchOper = utils.InOper
+			matchOper = metav1.LabelSelectorOpIn
 			matchValue = pbuilder.PolicyGenTemplate.Metadata.Labels.SiteName
 			path = utils.Sites + "/" + pbuilder.PolicyGenTemplate.Metadata.Labels.SiteName
 		} else if pbuilder.PolicyGenTemplate.Metadata.Labels.GroupName != utils.NotApplicable {
 			ns = utils.GroupNS
 			matchKey = pbuilder.PolicyGenTemplate.Metadata.Labels.GroupName
-			matchOper = utils.ExistOper
+			matchOper = metav1.LabelSelectorOpExists
 			path = utils.Groups + "/" + pbuilder.PolicyGenTemplate.Metadata.Labels.GroupName
 		} else if pbuilder.PolicyGenTemplate.Metadata.Labels.Common {
 			ns = utils.CommonNS
 			matchKey = utils.Common
-			matchOper = utils.InOper
+			matchOper = metav1.LabelSelectorOpIn
 			matchValue = "true"
 			path = utils.Common
 		} else {
