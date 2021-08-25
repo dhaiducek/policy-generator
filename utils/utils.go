@@ -8,8 +8,6 @@ const Sites = "sites"
 const CommonNS = Common + "-sub"
 const GroupNS = Groups + "-sub"
 const SiteNS = Sites + "-sub"
-const ExistOper = "Exists"
-const InOper = "In"
 const CustomResource = "customResource"
 
 type PolicyGenTemplate struct {

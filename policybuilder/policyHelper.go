@@ -1,10 +1,10 @@
 package policybuilder
 
 import (
+	"encoding/json"
 	"errors"
 	"strings"
 
-	"github.com/dhaiducek/policy-generator/utils"
 	configpolicyv1 "github.com/open-cluster-management/config-policy-controller/pkg/apis/policy/v1"
 	placementv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/apps/v1"
 	policyv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/policy/v1"
@@ -45,12 +45,18 @@ func CreateAcmConfigPolicy(name string, objTempArr []*configpolicyv1.ObjectTempl
 	return configPolicy
 }
 
-func CreateObjTemplates(objDef runtime.RawExtension) configpolicyv1.ObjectTemplate {
+func CreateObjTemplates(objDef map[string]interface{}) *configpolicyv1.ObjectTemplate {
 	objTemp := configpolicyv1.ObjectTemplate{}
 	objTemp.ComplianceType = "musthave"
-	objTemp.ObjectDefinition = objDef
+	objDefRaw, err := json.Marshal(objDef)
+	if err != nil {
+		panic(err)
+	}
+	objTemp.ObjectDefinition = runtime.RawExtension{
+		Raw: objDefRaw,
+	}
 
-	return objTemp
+	return &objTemp
 }
 
 func CreatePolicyObjectDefinition(acmConfigPolicy configpolicyv1.ConfigurationPolicy) configpolicyv1.ConfigurationPolicy {
@@ -86,7 +92,7 @@ func CreatePlacementRule(name string, namespace string, matchKey string, matchOp
 	expression := &metav1.LabelSelectorRequirement{}
 	expression.Key = matchKey
 	expression.Operator = matchOper
-	if matchOper != utils.ExistOper {
+	if matchOper != metav1.LabelSelectorOpExists {
 		expression.Values = strings.Split(matchValue, ",")
 	}
 	placmentRule.Spec.ClusterSelector.MatchExpressions = append(placmentRule.Spec.ClusterSelector.MatchExpressions, *expression)

@@ -2,6 +2,7 @@ package policybuilder
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"reflect"
@@ -195,19 +196,28 @@ func (pbuilder *PolicyBuilder) splitYamls(yamls []byte) ([][]byte, error) {
 	return resources, nil
 }
 
-func (pbuilder *PolicyBuilder) getPolicy(name string, namespace string, resources []runtime.RawExtension) policyv1.Policy {
+func (pbuilder *PolicyBuilder) getPolicy(name string, namespace string, resources []map[string]interface{}) policyv1.Policy {
 	if err := CheckNameLength(namespace, name); err != nil {
 		panic(err)
 	}
-	objTempArr := make([]configpolicyv1.ObjectTemplate, 0)
+	objTempArr := make([]*configpolicyv1.ObjectTemplate, 0)
 
 	for _, resource := range resources {
 		objTempArr = append(objTempArr, CreateObjTemplates(resource))
 	}
 	acmConfigPolicy := CreateAcmConfigPolicy(name, objTempArr)
 	policyObjDef := CreatePolicyObjectDefinition(acmConfigPolicy)
-	policyObjDefArr := make([]configpolicyv1.ConfigurationPolicy, 1)
-	policyObjDefArr[0] = policyObjDef
+	policyObjDefRaw, err := json.Marshal(policyObjDef)
+	if err != nil {
+		panic(err)
+	}
+	policyObj := policyv1.PolicyTemplate{
+		ObjectDefinition: runtime.RawExtension{
+			Raw: policyObjDefRaw,
+		},
+	}
+	policyObjDefArr := make([]*policyv1.PolicyTemplate, 1)
+	policyObjDefArr = append(policyObjDefArr, &policyObj)
 	acmPolicy := CreateAcmPolicy(name, namespace, policyObjDefArr)
 
 	return acmPolicy
