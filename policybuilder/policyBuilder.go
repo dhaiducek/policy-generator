@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/dhaiducek/policy-generator/utils"
+	configpolicyv1 "github.com/open-cluster-management/config-policy-controller/pkg/apis/policy/v1"
+	policyv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/policy/v1"
 	"gopkg.in/yaml.v3"
 )
 
@@ -28,7 +30,7 @@ func (pbuilder *PolicyBuilder) Build(customResourseOnly bool) map[string]interfa
 			panic("Error: missing policy template metadata.Name")
 		}
 		namespace, path, matchKey, matchValue, matchOper := pbuilder.getPolicyNsPath()
-		subjects := make([]utils.Subject, 0)
+		subjects := make([]policyv1.Subject, 0)
 
 		for _, sFile := range pbuilder.PolicyGenTemplate.SourceFiles {
 			pname := pbuilder.getPolicyName()
@@ -50,16 +52,16 @@ func (pbuilder *PolicyBuilder) Build(customResourseOnly bool) map[string]interfa
 		}
 		placementRule := CreatePlacementRule(pbuilder.PolicyGenTemplate.Metadata.Name, namespace, matchKey, matchOper, matchValue)
 
-		if err := CheckNameLength(namespace, placementRule.Metadata.Name); err != nil {
+		if err := CheckNameLength(namespace, placementRule.Name); err != nil {
 			panic(err)
 		}
-		policies[path+"/"+placementRule.Metadata.Name] = placementRule
-		placementBinding := CreatePlacementBinding(pbuilder.PolicyGenTemplate.Metadata.Name, namespace, placementRule.Metadata.Name, subjects)
+		policies[path+"/"+placementRule.Name] = placementRule
+		placementBinding := CreatePlacementBinding(pbuilder.PolicyGenTemplate.Metadata.Name, namespace, placementRule.Name, subjects)
 
-		if err := CheckNameLength(namespace, placementBinding.Metadata.Name); err != nil {
+		if err := CheckNameLength(namespace, placementBinding.Name); err != nil {
 			panic(err)
 		}
-		policies[path+"/"+placementBinding.Metadata.Name] = placementBinding
+		policies[path+"/"+placementBinding.Name] = placementBinding
 	} else if len(pbuilder.PolicyGenTemplate.SourceFiles) != 0 && customResourseOnly {
 		for _, sFile := range pbuilder.PolicyGenTemplate.SourceFiles {
 			sPolicyFile, err := ioutil.ReadFile(pbuilder.SourcePoliciesDir + "/" + sFile.FileName + utils.FileExt)
@@ -191,18 +193,18 @@ func (pbuilder *PolicyBuilder) splitYamls(yamls []byte) ([][]byte, error) {
 	return resources, nil
 }
 
-func (pbuilder *PolicyBuilder) getPolicy(name string, namespace string, resources []map[string]interface{}) utils.AcmPolicy {
+func (pbuilder *PolicyBuilder) getPolicy(name string, namespace string, resources []map[string]interface{}) policyv1.Policy {
 	if err := CheckNameLength(namespace, name); err != nil {
 		panic(err)
 	}
-	objTempArr := make([]utils.ObjectTemplates, 0)
+	objTempArr := make([]configpolicyv1.ObjectTemplate, 0)
 
-	for _, resourse := range resources {
-		objTempArr = append(objTempArr, CreateObjTemplates(resourse))
+	for _, resource := range resources {
+		objTempArr = append(objTempArr, CreateObjTemplates(resource))
 	}
 	acmConfigPolicy := CreateAcmConfigPolicy(name, objTempArr)
 	policyObjDef := CreatePolicyObjectDefinition(acmConfigPolicy)
-	policyObjDefArr := make([]utils.PolicyObjectDefinition, 1)
+	policyObjDefArr := make([]configpolicyv1.ConfigurationPolicy, 1)
 	policyObjDefArr[0] = policyObjDef
 	acmPolicy := CreateAcmPolicy(name, namespace, policyObjDefArr)
 

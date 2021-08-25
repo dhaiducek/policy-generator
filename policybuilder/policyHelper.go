@@ -5,19 +5,23 @@ import (
 	"strings"
 
 	"github.com/dhaiducek/policy-generator/utils"
+	configpolicyv1 "github.com/open-cluster-management/config-policy-controller/pkg/apis/policy/v1"
+	placementv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/apps/v1"
+	policyv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/policy/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func CreateAcmPolicy(name string, namespace string, policyObjDefArr []utils.PolicyObjectDefinition) utils.AcmPolicy {
-	policy := utils.AcmPolicy{}
-	policy.ApiVersion = "policy.open-cluster-management.io/v1"
-	policy.Kind = "Policy"
-	policy.Metadata.Name = name
+func CreateAcmPolicy(name string, namespace string, policyObjDefArr []*policyv1.PolicyTemplate) policyv1.Policy {
+	policy := policyv1.Policy{}
+	policy.Name = name
+	// TODO: Make annotations configurable
 	annotations := make(map[string]string, 3)
 	annotations["policy.open-cluster-management.io/standards"] = "NIST SP 800-53"
 	annotations["policy.open-cluster-management.io/categories"] = "CM Configuration Management"
 	annotations["policy.open-cluster-management.io/controls"] = "CM-2 Baseline Configuration"
-	policy.Metadata.Annotations = annotations
-	policy.Metadata.Namespace = namespace
+	policy.Annotations = annotations
+	policy.Namespace = namespace
 	policy.Spec.Disabled = false
 	policy.Spec.RemediationAction = "enforce"
 	policy.Spec.PolicyTemplates = policyObjDefArr
@@ -25,11 +29,9 @@ func CreateAcmPolicy(name string, namespace string, policyObjDefArr []utils.Poli
 	return policy
 }
 
-func CreateAcmConfigPolicy(name string, objTempArr []utils.ObjectTemplates) utils.AcmConfigurationPolicy {
-	configPolicy := utils.AcmConfigurationPolicy{}
-	configPolicy.ApiVersion = "policy.open-cluster-management.io/v1"
-	configPolicy.Kind = "ConfigurationPolicy"
-	configPolicy.Metadata.Name = name + "-config"
+func CreateAcmConfigPolicy(name string, objTempArr []*configpolicyv1.ObjectTemplate) configpolicyv1.ConfigurationPolicy {
+	configPolicy := configpolicyv1.ConfigurationPolicy{}
+	configPolicy.Name = name + "-config"
 	configPolicy.Spec.RemediationAction = "enforce"
 	configPolicy.Spec.Severity = "low"
 	exclude := make([]string, 1)
@@ -43,59 +45,51 @@ func CreateAcmConfigPolicy(name string, objTempArr []utils.ObjectTemplates) util
 	return configPolicy
 }
 
-func CreateObjTemplates(objDef map[string]interface{}) utils.ObjectTemplates {
-	objTemp := utils.ObjectTemplates{}
+func CreateObjTemplates(objDef runtime.RawExtension) configpolicyv1.ObjectTemplate {
+	objTemp := configpolicyv1.ObjectTemplate{}
 	objTemp.ComplianceType = "musthave"
 	objTemp.ObjectDefinition = objDef
 
 	return objTemp
 }
 
-func CreatePolicyObjectDefinition(acmConfigPolicy utils.AcmConfigurationPolicy) utils.PolicyObjectDefinition {
-	policyObjDef := utils.PolicyObjectDefinition{}
-	policyObjDef.ObjDef = acmConfigPolicy
+func CreatePolicyObjectDefinition(acmConfigPolicy configpolicyv1.ConfigurationPolicy) configpolicyv1.ConfigurationPolicy {
+	policyObjDef := configpolicyv1.ConfigurationPolicy{}
+	policyObjDef = acmConfigPolicy
 
 	return policyObjDef
 }
 
-func CreatePlacementBinding(name string, namespace string, ruleName string, subjects []utils.Subject) utils.PlacementBinding {
-	placementBinding := utils.PlacementBinding{}
-	placementBinding.ApiVersion = "policy.open-cluster-management.io/v1"
-	placementBinding.Kind = "PlacementBinding"
-	placementBinding.Metadata.Name = name + "-placementbinding"
-	placementBinding.Metadata.Namespace = namespace
+func CreatePlacementBinding(name string, namespace string, ruleName string, subjects []policyv1.Subject) policyv1.PlacementBinding {
+	placementBinding := policyv1.PlacementBinding{}
+	placementBinding.Name = name + "-placementbinding"
+	placementBinding.Namespace = namespace
 	placementBinding.PlacementRef.Name = ruleName
 	placementBinding.PlacementRef.Kind = "PlacementRule"
-	placementBinding.PlacementRef.ApiGroup = "apps.open-cluster-management.io"
+	placementBinding.PlacementRef.APIGroup = "apps.open-cluster-management.io"
 	placementBinding.Subjects = subjects
 
 	return placementBinding
 }
 
-func CreatePolicySubject(policyName string) utils.Subject {
-	subject := utils.Subject{}
-	subject.ApiGroup = "policy.open-cluster-management.io"
-	subject.Kind = "Policy"
+func CreatePolicySubject(policyName string) policyv1.Subject {
+	subject := policyv1.Subject{}
 	subject.Name = policyName
 
 	return subject
 }
 
-func CreatePlacementRule(name string, namespace string, matchKey string, matchOper string, matchValue string) utils.PlacementRule {
-	placmentRule := utils.PlacementRule{}
-	placmentRule.ApiVersion = "apps.open-cluster-management.io/v1"
-	placmentRule.Kind = "PlacementRule"
-	placmentRule.Metadata.Name = name + "-placementrule"
-	placmentRule.Metadata.Namespace = namespace
-	expression := make(map[string]interface{})
-	expression["key"] = matchKey
-	expression["operator"] = matchOper
+func CreatePlacementRule(name string, namespace string, matchKey string, matchOper metav1.LabelSelectorOperator, matchValue string) placementv1.PlacementRule {
+	placmentRule := placementv1.PlacementRule{}
+	placmentRule.Name = name + "-placementrule"
+	placmentRule.Namespace = namespace
+	expression := &metav1.LabelSelectorRequirement{}
+	expression.Key = matchKey
+	expression.Operator = matchOper
 	if matchOper != utils.ExistOper {
-		expression["values"] = strings.Split(matchValue, ",")
+		expression.Values = strings.Split(matchValue, ",")
 	}
-	expressions := make([]map[string]interface{}, 1)
-	expressions[0] = expression
-	placmentRule.Spec.ClusterSelector.MatchExpressions = expressions
+	placmentRule.Spec.ClusterSelector.MatchExpressions = append(placmentRule.Spec.ClusterSelector.MatchExpressions, *expression)
 
 	return placmentRule
 }
